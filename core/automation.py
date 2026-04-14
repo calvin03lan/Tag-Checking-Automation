@@ -40,6 +40,19 @@ _RTYPE_MAP = {
     "other":      "Other",
 }
 
+_MOBILE_EMULATION_PROFILE = {
+    # Approximate iPhone 12 viewport/profile for mobile web testing.
+    "viewport": {"width": 390, "height": 844},
+    "device_scale_factor": 3,
+    "is_mobile": True,
+    "has_touch": True,
+    "user_agent": (
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) "
+        "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 "
+        "Mobile/15E148 Safari/604.1"
+    ),
+}
+
 
 def _request_name(url: str) -> str:
     """Return request display name without scheme/domain, keeping path+query."""
@@ -101,6 +114,7 @@ class BrowserAutomation:
         keyword_items: List[KeywordItem],
         login_username: str = "",
         login_password: str = "",
+        emulate_mobile: bool = False,
         on_status_change: Optional[Callable[[UrlItem, UrlStatus], None]] = None,
         on_log: Optional[Callable[[str], None]] = None,
         on_screenshot: Optional[
@@ -123,6 +137,7 @@ class BrowserAutomation:
         self.keyword_items = keyword_items
         self.login_username = (login_username or "").strip()
         self.login_password = (login_password or "").strip()
+        self.emulate_mobile = emulate_mobile
         self._on_status_change  = on_status_change  or (lambda *_: None)
         self._on_log            = on_log            or (lambda _: None)
         self._on_screenshot = on_screenshot or (lambda *_: {})
@@ -149,28 +164,59 @@ class BrowserAutomation:
         try:
             async with async_playwright() as p:
                 chrome_path = _get_system_chrome_path()
-                launch_options: dict = {
-                    "headless": False,
-                    "args": ["--incognito"],
-                }
-                if self.login_username and self.login_password:
-                    launch_options["http_credentials"] = {
-                        "username": self.login_username,
-                        "password": self.login_password,
+                if self.emulate_mobile:
+                    # Mobile mode uses a non-persistent context to guarantee an
+                    # isolated incognito-like session while still applying
+                    # viewport/touch/user-agent emulation.
+                    launch_options: dict = {
+                        "headless": False,
+                        "args": ["--incognito"],
                     }
-                    self._on_log(
-                        "Using login credentials for browser authentication"
-                    )
-                if chrome_path:
-                    launch_options["executable_path"] = chrome_path
-                    self._on_log(f"Using system Chrome: {chrome_path}")
-                else:
-                    self._on_log("System Chrome not found — falling back to bundled Chromium")
+                    if chrome_path:
+                        launch_options["executable_path"] = chrome_path
+                        self._on_log(f"Using system Chrome: {chrome_path}")
+                    else:
+                        self._on_log("System Chrome not found — falling back to bundled Chromium")
 
-                context = await p.chromium.launch_persistent_context(
-                    user_data_dir, **launch_options
-                )
-                page = context.pages[0] if context.pages else await context.new_page()
+                    self._on_log(
+                        "Using mobile emulation profile in incognito session"
+                    )
+                    browser = await p.chromium.launch(**launch_options)
+
+                    context_options = dict(_MOBILE_EMULATION_PROFILE)
+                    if self.login_username and self.login_password:
+                        context_options["http_credentials"] = {
+                            "username": self.login_username,
+                            "password": self.login_password,
+                        }
+                        self._on_log(
+                            "Using login credentials for browser authentication"
+                        )
+                    context = await browser.new_context(**context_options)
+                    page = await context.new_page()
+                else:
+                    launch_options = {
+                        "headless": False,
+                        "args": ["--incognito"],
+                    }
+                    if self.login_username and self.login_password:
+                        launch_options["http_credentials"] = {
+                            "username": self.login_username,
+                            "password": self.login_password,
+                        }
+                        self._on_log(
+                            "Using login credentials for browser authentication"
+                        )
+                    if chrome_path:
+                        launch_options["executable_path"] = chrome_path
+                        self._on_log(f"Using system Chrome: {chrome_path}")
+                    else:
+                        self._on_log("System Chrome not found — falling back to bundled Chromium")
+
+                    context = await p.chromium.launch_persistent_context(
+                        user_data_dir, **launch_options
+                    )
+                    page = context.pages[0] if context.pages else await context.new_page()
 
                 for idx, url_item in enumerate(urls, start=1):
                     kw_entries = await self._process_url(
@@ -180,6 +226,8 @@ class BrowserAutomation:
                     self._on_progress(idx, total)
 
                 await context.close()
+                if self.emulate_mobile:
+                    await browser.close()
         finally:
             shutil.rmtree(user_data_dir, ignore_errors=True)
 

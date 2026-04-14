@@ -283,7 +283,7 @@ class TestLoadExcelConfig:
             for k in kws
         ]
 
-    def test_new_template_duplicate_composite_key_raises(self, tmp_path):
+    def test_new_template_duplicate_composite_key_is_allowed(self, tmp_path):
         path = _make_new_template_excel(
             tmp_path,
             [
@@ -302,12 +302,23 @@ class TestLoadExcelConfig:
                     "K": "zh_hk",
                     "L": "/dup/path",
                     "P": "btn-1",
-                    "S": "gtag_kw_2",
+                    "S": "16998350000/gtag_kw_2",
                 },
             ],
         )
-        with pytest.raises(ValueError, match="Duplicate composite key"):
-            load_excel_config(path)
+        urls, kws = load_excel_config(path)
+        assert len(urls) == 1
+        assert urls[0].num == 1
+        assert urls[0].lang == "tc"
+        assert urls[0].url.endswith("/zh-hk/dup/path")
+        assert (1, "tc", "dc_kw_1", "dc_type_1", "btn-1", "dc") in [
+            (k.num, k.lang, k.text, k.secondary_text, k.button_name, k.tag_type)
+            for k in kws
+        ]
+        assert (1, "tc", "gtag_kw_2", "16998350000", "btn-1", "gtag") in [
+            (k.num, k.lang, k.text, k.secondary_text, k.button_name, k.tag_type)
+            for k in kws
+        ]
 
     def test_new_template_cms_url_is_built_with_cms_lang_and_index(self, tmp_path):
         path = _make_new_template_excel(

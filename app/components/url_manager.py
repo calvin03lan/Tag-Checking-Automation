@@ -61,6 +61,7 @@ class UrlManagerDialog(tk.Toplevel):
 
         self._build_ui()
         self._apply_style_and_refresh()
+        self.protocol("WM_DELETE_WINDOW", self._on_window_close)
 
     # ================================================================
     # UI construction
@@ -119,6 +120,8 @@ class UrlManagerDialog(tk.Toplevel):
         self._build_selector_row(frame, label="TC Language", kind=kind, field="lang", lang="tc")
         self._build_selector_row(frame, label="SC Language", kind=kind, field="lang", lang="sc")
         self._build_selector_row(frame, label="EN Language", kind=kind, field="lang", lang="en")
+        if kind == "cms":
+            self._build_selector_row(frame, label="URL Suffix", kind=kind, field="suffix")
 
     def _build_selector_row(
         self,
@@ -172,6 +175,13 @@ class UrlManagerDialog(tk.Toplevel):
     def _save(self) -> None:
         self._on_save(list(self._preview_items))
         self.destroy()
+
+    def _on_window_close(self) -> None:
+        """
+        Keep close (X) behavior consistent with explicit Save/Confirm:
+        apply current preview URLs back to the main window before closing.
+        """
+        self._save()
 
     # ================================================================
     # Helpers
@@ -264,6 +274,8 @@ class UrlManagerDialog(tk.Toplevel):
         kind, field, lang = key
         if field == "title":
             return list(self._style_options["titles"][kind])
+        if field == "suffix":
+            return list(self._style_options["suffixes"][kind])
         return list(self._style_options["langs"][kind][lang])
 
     def _set_option_values(self, key: Tuple[str, str, Optional[str]], values: List[str]) -> None:
@@ -271,17 +283,25 @@ class UrlManagerDialog(tk.Toplevel):
         if field == "title":
             self._style_options["titles"][kind] = list(values)
             return
+        if field == "suffix":
+            self._style_options["suffixes"][kind] = list(values)
+            return
         self._style_options["langs"][kind][lang] = list(values)
 
     def _get_selected_value(self, key: Tuple[str, str, Optional[str]]) -> str:
         kind, field, lang = key
         if field == "title":
             return self._style_options["selected"]["titles"][kind]
+        if field == "suffix":
+            return self._style_options["selected"]["suffixes"][kind]
         return self._style_options["selected"]["langs"][kind][lang]
 
     def _set_selected_value(self, key: Tuple[str, str, Optional[str]], value: str) -> None:
         kind, field, lang = key
         if field == "title":
             self._style_options["selected"]["titles"][kind] = value
+            return
+        if field == "suffix":
+            self._style_options["selected"]["suffixes"][kind] = value
             return
         self._style_options["selected"]["langs"][kind][lang] = value

@@ -55,7 +55,6 @@ class NewTemplateConfigAdapter:
         column_map: Dict[str, int],
     ) -> List[ParsedRow]:
         parsed: List[ParsedRow] = []
-        composite_key_to_row: Dict[Tuple[str, str, str], int] = {}
 
         for row in range(DATA_START_ROW, ws.max_row + 1):
             raw_lang = ws.cell(row=row, column=column_map["language"]).value
@@ -74,15 +73,6 @@ class NewTemplateConfigAdapter:
                 raise ValueError(
                     f"Row {row}: K(language) and L(URL path) are required for non-empty rows"
                 )
-
-            key = (lang, url_path, button_id or "")
-            if key in composite_key_to_row:
-                first_row = composite_key_to_row[key]
-                raise ValueError(
-                    "Duplicate composite key detected (K/L/P). "
-                    f"Rows: {first_row} and {row}, key={key}"
-                )
-            composite_key_to_row[key] = row
 
             is_event = (
                 _clean_text(

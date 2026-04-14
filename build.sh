@@ -41,7 +41,7 @@ echo "[INFO] Building $APP_NAME ..."
   --windowed \
   --name "$APP_NAME" \
   --osx-bundle-identifier "$BUNDLE_ID" \
-  "${ICON_ARGS[@]}" \
+  "${ICON_ARGS[@]}" 
   "$ENTRY_FILE"
 
 echo "[OK] Build complete"

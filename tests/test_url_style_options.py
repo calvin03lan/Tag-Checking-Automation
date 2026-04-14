@@ -1,4 +1,5 @@
 """Unit tests for utils/url_style_options.py"""
+import copy
 from models.session import UrlItem
 from utils.url_style_options import (
     DEFAULT_URL_STYLE_OPTIONS,
@@ -15,6 +16,7 @@ class TestUrlStyleOptionsStore:
         data = load_url_style_options(path=p)
         assert data["selected"]["titles"]["pws"] == "https://www.hangseng.com"
         assert data["selected"]["langs"]["cms"]["en"] == "/eng"
+        assert data["selected"]["suffixes"]["cms"] == "/index.html"
 
     def test_save_then_load_round_trip(self, tmp_path):
         p = tmp_path / "style.json"
@@ -38,6 +40,20 @@ class TestUrlStyleBuild:
         options = load_url_style_options(path=tmp_path / "style.json")
         url = build_url_from_path("/cms/news/a", "tc", "cms", options=options)
         assert url == "https://cms.hangseng.com/cms/news/a/chi/index.html"
+
+    def test_build_cms_url_uses_custom_suffix(self, tmp_path):
+        options = load_url_style_options(path=tmp_path / "style.json")
+        options["suffixes"]["cms"].append("/landing")
+        options["selected"]["suffixes"]["cms"] = "/landing"
+        url = build_url_from_path("/cms/news/a", "tc", "cms", options=options)
+        assert url == "https://cms.hangseng.com/cms/news/a/chi/landing"
+
+    def test_build_cms_url_uses_extension_suffix_without_extra_slash(self, tmp_path):
+        options = load_url_style_options(path=tmp_path / "style.json")
+        options["suffixes"]["cms"].append(".html")
+        options["selected"]["suffixes"]["cms"] = ".html"
+        url = build_url_from_path("/cms/news/a", "tc", "cms", options=options)
+        assert url == "https://cms.hangseng.com/cms/news/a/chi.html"
 
     def test_build_uses_custom_selected_values(self, tmp_path):
         options = load_url_style_options(path=tmp_path / "style.json")
@@ -82,3 +98,20 @@ class TestApplyStyleToUrlItems:
         assert rebuilt[1].url == "https://cms.hangseng.com/cms/news/b/eng/index.html"
         assert rebuilt[2].url == "https://legacy.example.com"
         assert rebuilt[0].num == 1 and rebuilt[1].num == 2 and rebuilt[2].num == 3
+
+    def test_rebuilds_cms_items_with_selected_suffix(self):
+        options = copy.deepcopy(DEFAULT_URL_STYLE_OPTIONS)
+        options["suffixes"]["cms"] = ["/index.html", "/landing"]
+        options["selected"]["suffixes"]["cms"] = "/landing"
+        items = [
+            UrlItem(
+                url="https://old/b",
+                lang="en",
+                num=2,
+                url_path="/cms/news/b",
+                url_kind="cms",
+            ),
+        ]
+
+        rebuilt = apply_style_to_url_items(items, options=options)
+        assert rebuilt[0].url == "https://cms.hangseng.com/cms/news/b/eng/landing"

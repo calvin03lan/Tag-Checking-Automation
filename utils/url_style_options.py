@@ -33,6 +33,9 @@ DEFAULT_URL_STYLE_OPTIONS: Dict[str, object] = {
             "en": ["/eng"],
         },
     },
+    "suffixes": {
+        "cms": ["/index.html"],
+    },
     "selected": {
         "titles": {
             "pws": "https://www.hangseng.com",
@@ -41,6 +44,9 @@ DEFAULT_URL_STYLE_OPTIONS: Dict[str, object] = {
         "langs": {
             "pws": {"tc": "/zh-hk", "sc": "/zh-cn", "en": "/en-hk"},
             "cms": {"tc": "/chi", "sc": "/schi", "en": "/eng"},
+        },
+        "suffixes": {
+            "cms": "/index.html",
         },
     },
 }
@@ -112,7 +118,8 @@ def build_url_from_path(
     path = _normalize_url_path(url_path)
 
     if kind == "cms":
-        return f"{title}{path.rstrip('/')}{lang_seg}/index.html"
+        suffix = _normalize_cms_suffix(style["selected"]["suffixes"]["cms"])
+        return f"{title}{path.rstrip('/')}{lang_seg}{suffix}"
     return f"{title}{lang_seg}{path}"
 
 
@@ -130,9 +137,11 @@ def _normalize_options(data: Dict[str, object]) -> Dict[str, object]:
 
     titles = _as_dict(data.get("titles"))
     langs = _as_dict(data.get("langs"))
+    suffixes = _as_dict(data.get("suffixes"))
     selected = _as_dict(data.get("selected"))
     selected_titles = _as_dict(selected.get("titles"))
     selected_langs = _as_dict(selected.get("langs"))
+    selected_suffixes = _as_dict(selected.get("suffixes"))
 
     for kind in ("pws", "cms"):
         title_list = _as_list(titles.get(kind))
@@ -158,6 +167,16 @@ def _normalize_options(data: Dict[str, object]) -> Dict[str, object]:
             else:
                 base["selected"]["langs"][kind][lang] = base["langs"][kind][lang][0]
 
+    cms_suffix_options = _as_list(suffixes.get("cms"), transform=_normalize_cms_suffix)
+    if cms_suffix_options:
+        base["suffixes"]["cms"] = cms_suffix_options
+
+    selected_cms_suffix = _normalize_cms_suffix(selected_suffixes.get("cms", ""))
+    if selected_cms_suffix in base["suffixes"]["cms"]:
+        base["selected"]["suffixes"]["cms"] = selected_cms_suffix
+    else:
+        base["selected"]["suffixes"]["cms"] = base["suffixes"]["cms"][0]
+
     return base
 
 
@@ -165,10 +184,19 @@ def _as_dict(value) -> Dict:
     return value if isinstance(value, dict) else {}
 
 
-def _as_list(value) -> List[str]:
+def _as_list(value, transform=None) -> List[str]:
     if not isinstance(value, list):
         return []
-    cleaned = [str(v).strip() for v in value if str(v).strip()]
+    cleaned: List[str] = []
+    for raw in value:
+        item = str(raw).strip()
+        if not item:
+            continue
+        if transform is not None:
+            item = str(transform(item)).strip()
+            if not item:
+                continue
+        cleaned.append(item)
     deduped: List[str] = []
     seen = set()
     for item in cleaned:
@@ -184,3 +212,12 @@ def _normalize_url_path(path: str) -> str:
     if not value.startswith("/"):
         value = f"/{value}"
     return value
+
+
+def _normalize_cms_suffix(value: object) -> str:
+    suffix = str(value or "").strip()
+    if not suffix:
+        return "/index.html"
+    if suffix.startswith("/") or suffix.startswith("."):
+        return suffix
+    return f"/{suffix}"

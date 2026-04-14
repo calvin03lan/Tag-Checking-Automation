@@ -112,6 +112,7 @@ class MainWindow:
         self._workspace:      Optional[Path]    = None
         self._is_running:     bool              = False
         self._login_credentials: Dict[str, str] = load_login_credentials()
+        self._emulate_mobile_var = tk.BooleanVar(value=False)
 
         # Treeview iid trackers
         self._kw_iid_list:   List[str] = []   # index → kw treeview iid
@@ -158,6 +159,11 @@ class MainWindow:
                    command=self._open_url_manager).grid(row=0, column=3, padx=6)
         ttk.Button(cfg, text="Login Management",
                    command=self._open_login_manager).grid(row=0, column=4, padx=6)
+        ttk.Checkbutton(
+            cfg,
+            text="Mobile Emulation",
+            variable=self._emulate_mobile_var,
+        ).grid(row=0, column=5, padx=(8, 0), sticky=tk.W)
 
         cfg.grid_columnconfigure(1, weight=1)
 
@@ -465,6 +471,7 @@ class MainWindow:
             keyword_items=self._keyword_items,
             login_username=self._login_credentials.get("username", ""),
             login_password=self._login_credentials.get("password", ""),
+            emulate_mobile=self._emulate_mobile_var.get(),
             on_status_change=self._cb_status_change,
             on_log=self._log,
             on_progress=self._cb_progress,

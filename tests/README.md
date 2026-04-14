@@ -5,10 +5,11 @@
 ## 配置读取覆盖点
 - `test_config_io.py` 已覆盖旧模板（`URLs` + `Keywords`）读取。
 - 已覆盖新模板自动回退解析（非旧模板双 sheet 时自动启用）。
-- 已覆盖新模板关键约束：`K/L/P` 复合主键重复报错。
+- 已覆盖新模板重复键策略：`K/L/P` 复合键重复不报错，解析阶段允许同键多行输入并继续产出关键词。
 - 已覆盖新模板 URL 新规：`pws/cms` 两种拼接格式与默认域名规则。
 - 已覆盖语言 `(All)` 行自动拆分为 `tc/sc/en` 三条 URL 与关键词记录。
-- 已覆盖全局 URL 样式选项的存储与应用（title/语言片段选择、URL重建、legacy URL 保持不变）。
+- 已覆盖全局 URL 样式选项的存储与应用（title/语言片段/cms后缀选择、URL重建、legacy URL 保持不变）。
+- 已覆盖 CMS 后缀两种拼接形态：`/index.html` 路径后缀与 `.html` 扩展后缀（扩展后缀不追加多余 `/`）。
 - 已覆盖新模板 `Gtag` 关键词拆分规则（`conversion_id/snippet`），并校验 `secondary_text` 读入。
 - 已覆盖新模板 `DoubleClick(type+cat)`、`Meta(master pixel id+ev)`、`The Trade Desk(account+ct)`、`Taboola(account+en)` 的多关键词读入。
 - 已覆盖新模板 `Applier(action_id+track_id)` 两关键词读入（`type` 不参与）。
