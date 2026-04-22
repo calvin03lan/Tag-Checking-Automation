@@ -1,6 +1,6 @@
 # tests 目录说明
 作用：单元测试集合，用于验证核心逻辑、I/O 解析与报告输出的正确性。输入：pytest 执行与临时测试数据；输出：通过/失败结果与回归保护。  
-关键文件：`test_*.py`（当前 113 条测试）。
+关键文件：`test_*.py`（当前 118 条测试）。
 
 ## 配置读取覆盖点
 - `test_config_io.py` 已覆盖旧模板（`URLs` + `Keywords`）读取。
@@ -10,6 +10,7 @@
 - 已覆盖语言 `(All)` 行自动拆分为 `tc/sc/en` 三条 URL 与关键词记录。
 - 已覆盖全局 URL 样式选项的存储与应用（title/语言片段/cms后缀选择、URL重建、legacy URL 保持不变）。
 - 已覆盖 CMS 后缀两种拼接形态：`/index.html` 路径后缀与 `.html` 扩展后缀（扩展后缀不追加多余 `/`）。
+- 已覆盖平台运行时适配（`test_platform_runtime.py`）：输出目录策略、Chrome 路径候选、Cmd/Ctrl 修饰键与 macOS 录屏重置提示命令。
 - 已覆盖新模板 `Gtag` 关键词拆分规则（`conversion_id/snippet`），并校验 `secondary_text` 读入。
 - 已覆盖新模板 `DoubleClick(type+cat)`、`Meta(master pixel id+ev)`、`The Trade Desk(account+ct)`、`Taboola(account+en)` 的多关键词读入。
 - 已覆盖新模板 `Applier(action_id+track_id)` 两关键词读入（`type` 不参与）。

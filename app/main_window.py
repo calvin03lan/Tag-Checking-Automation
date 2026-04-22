@@ -54,6 +54,7 @@ from utils.screen_capture_permission import (
     is_screen_capture_allowed,
     request_screen_capture_access,
 )
+from utils.platform_runtime import screen_capture_reset_hint_command
 from utils.url_style_options import apply_style_to_url_items
 
 # ── Log level detection ──────────────────────────────────────────────
@@ -549,12 +550,16 @@ class MainWindow:
         if not is_screen_capture_allowed():
             request_screen_capture_access()
             if not is_screen_capture_allowed():
+                reset_hint = screen_capture_reset_hint_command()
+                warning_message = (
+                    "Please allow Screen Recording for this app, then quit and reopen the app."
+                )
+                if reset_hint:
+                    warning_message += f"\nIf permission appears already enabled, run:\n{reset_hint}"
                 self._log("⚠️  Screen Recording permission not active; skip GUI capture and keep page screenshots")
                 messagebox.showwarning(
                     "Screen Recording Required",
-                    "Please allow Screen Recording for this app, then quit and reopen the app.\n"
-                    "If permission appears already enabled, run:\n"
-                    "tccutil reset ScreenCapture",
+                    warning_message,
                     parent=self.root,
                 )
                 return

@@ -9,6 +9,14 @@
 - `cms` 后缀支持两种形态：以 `/` 开头的路径后缀（如 `/index.html`）与以 `.` 开头的扩展后缀（如 `.html`，将拼成 `.../chi.html`，不会额外插入 `/`）。
 - 提供 URL 重建函数与批量应用函数，供 URL 管理组件实时刷新预览和保存结果。
 
+## 平台运行时适配
+- `platform_runtime.py` 统一封装系统差异（macOS / Windows / Linux）：
+  - 默认输出根目录（`Tag_QA_Files`）的系统级路径决策；
+  - 系统 Chrome 路径候选与自动探测；
+  - 浏览器新标签点击修饰键（`Meta/Control`）；
+  - macOS 录屏权限重置提示命令（`tccutil reset ScreenCapture`）。
+- 业务层不再直接写 `sys.platform` 分支，改为调用该模块以减少平台耦合。
+
 ## 登录凭证全局选项
 - `login_credentials.py` 负责网页登录凭证（`username/password`）的全局持久化（跨任务复用）。
 - 默认凭证：`depaemuser` / `Pr0t8ctd8pa8mus8r`；支持通过弹窗修改并保存。

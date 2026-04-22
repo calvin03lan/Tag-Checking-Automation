@@ -1,4 +1,5 @@
 from pathlib import Path
+from utils.platform_runtime import default_output_base_root
 
 APP_NAME = "Tagging Automation QA"
 
@@ -36,7 +37,7 @@ LANG_COMPAT_MAP = {
 }
 
 REPORT_FILENAME = "tag_qa_report.xlsx"
-OUTPUT_BASE_ROOT = Path.home() / "Documents" / "Tag_QA_Files"
+OUTPUT_BASE_ROOT = default_output_base_root()
 PICTURES_ROOT = OUTPUT_BASE_ROOT / "Pictures"
 REPORTS_ROOT = OUTPUT_BASE_ROOT / "Reports"
 

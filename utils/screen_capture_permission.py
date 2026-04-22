@@ -10,11 +10,11 @@ so callers can proceed without platform-specific branching.
 """
 from __future__ import annotations
 
-import sys
+from utils.platform_runtime import is_macos
 
 
 def is_screen_capture_allowed() -> bool:
-    if sys.platform != "darwin":
+    if not is_macos():
         return True
     api = _load_coregraphics_api()
     if api is None:
@@ -31,7 +31,7 @@ def is_screen_capture_allowed() -> bool:
 
 
 def request_screen_capture_access() -> bool:
-    if sys.platform != "darwin":
+    if not is_macos():
         return True
     api = _load_coregraphics_api()
     if api is None:

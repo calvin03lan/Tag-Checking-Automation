@@ -9,7 +9,6 @@ import asyncio
 import os
 import re
 import shutil
-import sys
 import tempfile
 import time as _time
 from datetime import datetime
@@ -21,6 +20,10 @@ from playwright.async_api import BrowserContext, Page, Request, Response, async_
 from core.tag_analyzer import TagAnalyzer
 from models.config import CLICK_TIMEOUT_MS, PAGE_LOAD_TIMEOUT_MS
 from models.session import KeywordItem, ReportEntry, UrlItem, UrlStatus
+from utils.platform_runtime import (
+    find_system_chrome_executable,
+    new_tab_click_modifier,
+)
 
 
 _RTYPE_MAP = {
@@ -64,29 +67,6 @@ def _request_name(url: str) -> str:
         return name if name else parsed.netloc
     except Exception:
         return url
-
-
-def _get_system_chrome_path() -> Optional[str]:
-    """Return the system Chrome executable path, or None if not found."""
-    if sys.platform == "darwin":
-        candidates = [
-            "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-        ]
-    elif sys.platform == "win32":
-        candidates = [
-            r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-            r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
-        ]
-    else:
-        candidates = [
-            "/usr/bin/google-chrome",
-            "/usr/bin/google-chrome-stable",
-        ]
-    for path in candidates:
-        if os.path.exists(path):
-            return path
-    return None
-
 
 class BrowserAutomation:
     """
@@ -163,7 +143,7 @@ class BrowserAutomation:
 
         try:
             async with async_playwright() as p:
-                chrome_path = _get_system_chrome_path()
+                chrome_path = find_system_chrome_executable()
                 if self.emulate_mobile:
                     # Mobile mode uses a non-persistent context to guarantee an
                     # isolated incognito-like session while still applying
@@ -483,7 +463,7 @@ class BrowserAutomation:
         - click every 2 seconds with Cmd/Ctrl+left-click (new tab behavior)
         - wait for log debounce timer to reach zero before next step
         """
-        modifier = "Meta" if sys.platform == "darwin" else "Control"
+        modifier = new_tab_click_modifier()
         if not button_ids:
             self._on_log("ℹ️  No button IDs for current page; skip click phase")
             return

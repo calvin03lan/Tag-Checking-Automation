@@ -20,3 +20,4 @@
 补充：`PASS/FAILED` 结果单元格在 B-G 与证据结果列保持一致样式（红/绿底、加粗、上下左右居中）；当语言列为 `all/(all)` 时，会在该行下方自动插入 2 行用于三语言证据展开。
 补充：报告结果按关键词行对齐规则已抽离到 `report_alignment.py`，UI 层通过核心函数调用，不再在 `app` 中维护该业务算法。
 补充：`automation.py` 支持移动端设备模拟启动参数（iPhone-like viewport + touch + mobile UA）；前端开启 `Mobile Emulation` 后，浏览器会以独立无痕会话启动并在该会话中应用移动端参数，执行同一套抓包与匹配流程。
+补充：系统相关能力（Chrome 可执行路径探测、Cmd/Ctrl 点击修饰键）已从 `automation.py` 下沉到 `utils.platform_runtime`，核心流程仅依赖统一接口，便于跨平台迁移。
